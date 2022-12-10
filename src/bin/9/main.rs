@@ -51,7 +51,9 @@ fn simulate(dirs: Vec<(i32, i32)>, knots: u32) -> HashSet<(i32, i32)> {
             let new_move = (tail.0 - previous_tail.0, tail.1 - previous_tail.1);
             moves.push(new_move);
         }
-        visited.insert(tail);
+        if knots == 2 {
+            visited.insert(tail);
+        }
     }
     if knots == 2 {
         visited
