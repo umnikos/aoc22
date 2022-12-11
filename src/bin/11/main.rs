@@ -1,44 +1,44 @@
 use std::collections::VecDeque;
 
 struct Monkey {
-    op: Box<dyn Fn(u64) -> u64>,
-    throw: Box<dyn Fn(u64) -> usize>,
+    op: fn(u64) -> u64,
+    throw: fn(u64) -> usize,
 }
 
 fn main() {
     // TODO: get this info from a frikkin parser
     let monkeys = vec![
         Monkey {
-            op: Box::new(|n| n * 5),
-            throw: Box::new(|n| if n % 11 == 0 { 2 } else { 3 }),
+            op: (|n| n * 5),
+            throw: (|n| if n % 11 == 0 { 2 } else { 3 }),
         },
         Monkey {
-            op: Box::new(|n| n * 11),
-            throw: Box::new(|n| if n % 5 == 0 { 4 } else { 0 }),
+            op: (|n| n * 11),
+            throw: (|n| if n % 5 == 0 { 4 } else { 0 }),
         },
         Monkey {
-            op: Box::new(|n| n + 2),
-            throw: Box::new(|n| if n % 19 == 0 { 5 } else { 6 }),
+            op: (|n| n + 2),
+            throw: (|n| if n % 19 == 0 { 5 } else { 6 }),
         },
         Monkey {
-            op: Box::new(|n| n + 5),
-            throw: Box::new(|n| if n % 13 == 0 { 2 } else { 6 }),
+            op: (|n| n + 5),
+            throw: (|n| if n % 13 == 0 { 2 } else { 6 }),
         },
         Monkey {
-            op: Box::new(|n| n * n),
-            throw: Box::new(|n| if n % 7 == 0 { 0 } else { 3 }),
+            op: (|n| n * n),
+            throw: (|n| if n % 7 == 0 { 0 } else { 3 }),
         },
         Monkey {
-            op: Box::new(|n| n + 4),
-            throw: Box::new(|n| if n % 17 == 0 { 7 } else { 1 }),
+            op: (|n| n + 4),
+            throw: (|n| if n % 17 == 0 { 7 } else { 1 }),
         },
         Monkey {
-            op: Box::new(|n| n + 6),
-            throw: Box::new(|n| if n % 2 == 0 { 7 } else { 5 }),
+            op: (|n| n + 6),
+            throw: (|n| if n % 2 == 0 { 7 } else { 5 }),
         },
         Monkey {
-            op: Box::new(|n| n + 7),
-            throw: Box::new(|n| if n % 3 == 0 { 4 } else { 1 }),
+            op: (|n| n + 7),
+            throw: (|n| if n % 3 == 0 { 4 } else { 1 }),
         },
     ];
     let items = vec![
