@@ -1,56 +1,98 @@
+use chumsky::prelude::*;
 use std::collections::VecDeque;
 
 struct Monkey {
-    op: fn(u64) -> u64,
-    throw: fn(u64) -> usize,
+    op: Box<dyn Fn(u64) -> u64>,
+    throw: Box<dyn Fn(u64) -> usize>,
+}
+
+fn monkey_parser() -> impl Parser<char, (Monkey, Vec<u64>), Error = Simple<char>> {
+    #[derive(Clone, Copy, Debug)]
+    enum Atom {
+        Var,
+        Lit(u64),
+    }
+    fn atom() -> impl Parser<char, Atom, Error = Simple<char>> {
+        let var = literal("old").to(Atom::Var);
+        let atom = var.or(num().map(Atom::Lit as fn(u64) -> Atom));
+        atom
+    }
+    let op = just('+').or(just('-')).or(just('*'));
+    let exp = literal("new = ")
+        .ignore_then(atom())
+        .then(op.padded())
+        .then(atom());
+
+    literal("Monkey")
+        .padded()
+        .ignore_then(text::int(10))
+        .ignore_then(just(':').padded())
+        .ignore_then(literal("Starting items:").padded())
+        .ignore_then(int_array())
+        .then_ignore(literal("Operation:").padded())
+        .then(exp.padded())
+        .then_ignore(literal("Test: divisible by").padded())
+        .then(num())
+        .then_ignore(literal("If true: throw to monkey").padded())
+        .then(num())
+        .then_ignore(literal("If false: throw to monkey").padded())
+        .then(num())
+        .map(move |((((i, ((l, o), r)), m), a), b)| {
+            let mon = Monkey {
+                op: Box::from(move |n| {
+                    let x = match l {
+                        Atom::Var => n,
+                        Atom::Lit(q) => q,
+                    };
+                    let y = match r {
+                        Atom::Var => n,
+                        Atom::Lit(q) => q,
+                    };
+                    match o {
+                        '+' => x + y,
+                        '-' => x - y,
+                        '*' => x * y,
+                        _ => unreachable!("unknown operator"),
+                    }
+                }),
+                throw: Box::from(move |n| if n % m == 0 { a as usize } else { b as usize }),
+            };
+            let items = i;
+            (mon, items)
+        })
+}
+
+fn num() -> impl Parser<char, u64, Error = Simple<char>> {
+    text::int::<char, Simple<char>>(10).from_str().unwrapped()
+}
+
+fn int_array() -> impl Parser<char, Vec<u64>, Error = Simple<char>> {
+    num().separated_by(literal(", "))
+}
+
+fn literal(s: &str) -> impl Parser<char, (), Error = Simple<char>> {
+    let s = String::from(s);
+    any().repeated().at_most(s.len()).try_map(move |ss, span| {
+        if ss.into_iter().collect::<String>() == s {
+            Ok(())
+        } else {
+            Err(Simple::expected_input_found(span, None, None))
+        }
+    })
 }
 
 fn main() {
-    // TODO: get this info from a frikkin parser
-    let monkeys = vec![
-        Monkey {
-            op: (|n| n * 5),
-            throw: (|n| if n % 11 == 0 { 2 } else { 3 }),
-        },
-        Monkey {
-            op: (|n| n * 11),
-            throw: (|n| if n % 5 == 0 { 4 } else { 0 }),
-        },
-        Monkey {
-            op: (|n| n + 2),
-            throw: (|n| if n % 19 == 0 { 5 } else { 6 }),
-        },
-        Monkey {
-            op: (|n| n + 5),
-            throw: (|n| if n % 13 == 0 { 2 } else { 6 }),
-        },
-        Monkey {
-            op: (|n| n * n),
-            throw: (|n| if n % 7 == 0 { 0 } else { 3 }),
-        },
-        Monkey {
-            op: (|n| n + 4),
-            throw: (|n| if n % 17 == 0 { 7 } else { 1 }),
-        },
-        Monkey {
-            op: (|n| n + 6),
-            throw: (|n| if n % 2 == 0 { 7 } else { 5 }),
-        },
-        Monkey {
-            op: (|n| n + 7),
-            throw: (|n| if n % 3 == 0 { 4 } else { 1 }),
-        },
-    ];
-    let items = vec![
-        VecDeque::from([83, 88, 96, 79, 86, 88, 70]),
-        VecDeque::from([59, 63, 98, 85, 68, 72]),
-        VecDeque::from([90, 79, 97, 52, 90, 94, 71, 70]),
-        VecDeque::from([97, 55, 62]),
-        VecDeque::from([74, 54, 94, 76]),
-        VecDeque::from([58]),
-        VecDeque::from([66, 63]),
-        VecDeque::from([56, 56, 90, 96, 68]),
-    ];
+    let input = include_str!("input.txt");
+    if let Err(m) = monkey_parser().parse(input) {
+        println!("{m:?}");
+    }
+    let mut monkeys = Vec::new();
+    let mut items = Vec::new();
+    let res: Vec<(Monkey, Vec<u64>)> = monkey_parser().repeated().parse(input).unwrap();
+    for (monkey, thing) in res.into_iter() {
+        monkeys.push(monkey);
+        items.push(VecDeque::from(thing));
+    }
 
     part_one(&monkeys, items.clone());
     part_two(&monkeys, items.clone());
