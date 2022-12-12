@@ -35,9 +35,8 @@ fn elevation(c: char) -> i32 {
     }
 }
 
-fn pathfind(arr: &Array2<char>, start: (usize, usize)) -> Option<i32> {
-    let mut unexplored: VecDeque<(usize, usize)> = VecDeque::new();
-    unexplored.push_back(start);
+fn pathfind(arr: &Array2<char>, unexplored: VecDeque<(usize, usize)>) -> Option<i32> {
+    let mut unexplored = unexplored;
     let mut explored: HashSet<(usize, usize)> = HashSet::new();
     for step in 0.. {
         let mut found: VecDeque<(usize, usize)> = VecDeque::new();
@@ -79,7 +78,7 @@ fn part_one(input: &str) {
         for x in 0..64 {
             if arr[(y, x)] == 'S' {
                 let start = (y, x);
-                let res = pathfind(&arr, start);
+                let res = pathfind(&arr, VecDeque::from([start]));
                 println!("{res:?}");
                 return;
             }
@@ -89,14 +88,15 @@ fn part_one(input: &str) {
 
 fn part_two(input: &str) {
     let arr = parse(input);
-    let mut min = 99999;
+    let mut starts = VecDeque::new();
     for y in 0..41 {
         for x in 0..64 {
             if elevation(arr[(y, x)]) == 1 {
-                let Some(res) = pathfind(&arr, (y,x)) else {continue;};
-                min = min.min(res);
+                let start = (y, x);
+                starts.push_back(start);
             }
         }
     }
-    println!("{min}");
+    let min = pathfind(&arr, starts);
+    println!("{min:?}");
 }
