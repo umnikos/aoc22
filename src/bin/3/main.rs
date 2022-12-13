@@ -33,10 +33,9 @@ fn part_one(input: &str) {
 fn part_two(input: &str) {
     let total = input
         .lines()
-        .chunks(3)
+        .tuples()
         .into_iter()
-        .map(|chunk| {
-            let [first, second, third] = chunk.collect::<Vec<_>>()[..] else {unreachable!()};
+        .map(|(first, second, third)| {
             for item in first.chars() {
                 if second.find(item).is_some() && third.find(item).is_some() {
                     return priority(item);
