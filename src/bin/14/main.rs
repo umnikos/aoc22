@@ -78,7 +78,7 @@ fn simulate_sand(mut grid: Array2<u8>) -> u32 {
                 current = above;
             }
             None => {
-                return solidified;
+                break 'simulating;
             }
         }
     }
