@@ -1,6 +1,5 @@
 use self::Item::{Num, Packet};
-use chumsky::prelude::*;
-use itertools::*;
+use aoc22::*;
 use std::cmp::Ordering;
 use std::cmp::Ordering::Equal;
 
@@ -44,10 +43,6 @@ impl Ord for Item {
             },
         }
     }
-}
-
-fn num() -> impl Parser<char, u64, Error = Simple<char>> {
-    text::int::<char, Simple<char>>(10).from_str().unwrapped()
 }
 
 fn packet_parser() -> impl Parser<char, Item, Error = Simple<char>> {

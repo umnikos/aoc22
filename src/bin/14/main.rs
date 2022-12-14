@@ -1,35 +1,8 @@
-use chumsky::prelude::*;
-use itertools::Itertools;
-use ndarray::prelude::*;
-
-fn num() -> impl Parser<char, usize, Error = Simple<char>> {
-    text::int::<char, Simple<char>>(10).from_str().unwrapped()
-}
-
-fn literal(s: &str) -> impl Parser<char, (), Error = Simple<char>> {
-    let s = String::from(s);
-    any().repeated().at_most(s.len()).try_map(move |ss, span| {
-        if ss.into_iter().collect::<String>() == s {
-            Ok(())
-        } else {
-            Err(Simple::expected_input_found(span, None, None))
-        }
-    })
-}
+use aoc22::*;
 
 fn shape_parser() -> impl Parser<char, Vec<(usize, usize)>, Error = Simple<char>> {
     let tuple = num().then_ignore(just(',')).then(num());
     tuple.separated_by(literal("->").padded()).at_least(1)
-}
-
-fn offset_coords(coords: (usize, usize), offset: (isize, isize)) -> Option<(usize, usize)> {
-    let a = coords.0 as isize + offset.0;
-    let b = coords.1 as isize + offset.1;
-    if a < 0 || b < 0 {
-        None
-    } else {
-        Some((a as usize, b as usize))
-    }
 }
 
 fn main() {

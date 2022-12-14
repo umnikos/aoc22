@@ -34,6 +34,7 @@ dependencies = [
  "chumsky",
  "itertools",
  "ndarray",
+ "num-traits",
  "rayon",
  "scan_fmt",
 ]

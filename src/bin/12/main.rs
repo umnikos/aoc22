@@ -1,4 +1,4 @@
-use ndarray::prelude::*;
+use aoc22::*;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 
@@ -14,16 +14,6 @@ fn parse(input: &str) -> Array2<char> {
         input.lines().collect::<Vec<_>>().concat().chars().collect(),
     )
     .unwrap()
-}
-
-fn offset_coords(coords: (usize, usize), offset: (isize, isize)) -> Option<(usize, usize)> {
-    let a = coords.0 as isize + offset.0;
-    let b = coords.1 as isize + offset.1;
-    if a < 0 || b < 0 {
-        None
-    } else {
-        Some((a as usize, b as usize))
-    }
 }
 
 fn elevation(c: char) -> i32 {

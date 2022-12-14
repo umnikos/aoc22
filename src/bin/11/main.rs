@@ -1,4 +1,4 @@
-use chumsky::prelude::*;
+use aoc22::*;
 use std::collections::VecDeque;
 
 struct Monkey {
@@ -32,11 +32,11 @@ fn monkey_parser() -> impl Parser<char, (Monkey, Vec<u64>), Error = Simple<char>
         .then_ignore(literal("Operation:").padded())
         .then(exp.padded())
         .then_ignore(literal("Test: divisible by").padded())
-        .then(num())
+        .then(num::<u64>())
         .then_ignore(literal("If true: throw to monkey").padded())
-        .then(num())
+        .then(num::<u64>())
         .then_ignore(literal("If false: throw to monkey").padded())
-        .then(num())
+        .then(num::<u64>())
         .map(move |((((i, ((l, o), r)), m), a), b)| {
             let mon = Monkey {
                 op: Box::from(move |n| {
@@ -62,23 +62,8 @@ fn monkey_parser() -> impl Parser<char, (Monkey, Vec<u64>), Error = Simple<char>
         })
 }
 
-fn num() -> impl Parser<char, u64, Error = Simple<char>> {
-    text::int::<char, Simple<char>>(10).from_str().unwrapped()
-}
-
 fn int_array() -> impl Parser<char, Vec<u64>, Error = Simple<char>> {
     num().separated_by(literal(", "))
-}
-
-fn literal(s: &str) -> impl Parser<char, (), Error = Simple<char>> {
-    let s = String::from(s);
-    any().repeated().at_most(s.len()).try_map(move |ss, span| {
-        if ss.into_iter().collect::<String>() == s {
-            Ok(())
-        } else {
-            Err(Simple::expected_input_found(span, None, None))
-        }
-    })
 }
 
 fn main() {
