@@ -23,8 +23,7 @@ impl Filesystem {
 }
 
 fn simulate(commands: &str) -> Filesystem {
-    fn recurse<'t>(wd: &mut Filesystem, commands: VecDeque<&'t str>) -> VecDeque<&'t str> {
-        let mut commands = commands;
+    fn recurse<'t>(wd: &mut Filesystem, mut commands: VecDeque<&'t str>) -> VecDeque<&'t str> {
         let Some(command) = commands.pop_front() else {return commands;};
         if command == "$ cd /" {
             // we do nothing

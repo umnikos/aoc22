@@ -98,8 +98,7 @@ fn main() {
     part_two(&monkeys, items.clone());
 }
 
-fn part_one(monkeys: &[Monkey], items: Vec<VecDeque<u64>>) {
-    let mut items = items;
+fn part_one(monkeys: &[Monkey], mut items: Vec<VecDeque<u64>>) {
     let mut rankings = [0; 8];
     for _round in 0..20 {
         for monkey in 0..8 {
@@ -118,8 +117,7 @@ fn part_one(monkeys: &[Monkey], items: Vec<VecDeque<u64>>) {
     println!("{}", rankings[7] * rankings[6]);
 }
 
-fn part_two(monkeys: &[Monkey], items: Vec<VecDeque<u64>>) {
-    let mut items = items;
+fn part_two(monkeys: &[Monkey], mut items: Vec<VecDeque<u64>>) {
     let mut rankings: [u64; 8] = [0; 8];
     for _round in 0..10_000 {
         for monkey in 0..8 {

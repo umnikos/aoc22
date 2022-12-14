@@ -45,8 +45,7 @@ fn part_one(input: &str) {
     println!("{res}");
 }
 
-fn scenic_score(arr: &Array2<u8>, pos: (i32, i32), dir: (i32, i32)) -> i32 {
-    let mut pos = pos;
+fn scenic_score(arr: &Array2<u8>, mut pos: (i32, i32), dir: (i32, i32)) -> i32 {
     let house = arr[(pos.0 as usize, pos.1 as usize)];
     let mut score = 0;
     // let mut max = 0;
