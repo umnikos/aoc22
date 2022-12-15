@@ -1,5 +1,4 @@
 use aoc22::*;
-use std::collections::HashSet;
 
 fn parse_line() -> impl Parser<char, ((i64, i64), (i64, i64)), Error = Simple<char>> {
     let sensor = literal("Sensor at x=")
@@ -65,35 +64,48 @@ fn part_one(input: &str) {
 
 fn part_two(input: &str) {
     let pairs = parse_line().padded().repeated().parse(input).unwrap();
-    // candidates are points just outside a sensor's range
-    let mut candidates: Vec<(i64, i64)> = Vec::new();
-    for &(sensor, beacon) in &pairs {
-        let range = (sensor.0 - beacon.0).abs() + (sensor.1 - beacon.1).abs();
-        let dist = range + 1;
-        for x in (sensor.0 - dist)..=(sensor.0 + dist) {
-            let slack = dist - (sensor.0 - x).abs();
-            let highy = sensor.1 + slack;
-            let lowy = sensor.1 - slack;
-            candidates.push((x, highy));
-            candidates.push((x, lowy));
-        }
-    }
 
-    // we remove all candidates outside the grid or in another sensor's range
-    let found: Vec<(i64, i64)> = candidates
-        .into_par_iter()
-        .filter(|&(x, y)| {
-            if x < 0 || y < 0 || x > 4000000 || y > 4000000 {
+    let sensor_ranges: Vec<((i64, i64), i64)> = pairs
+        .iter()
+        .map(|&(sensor, beacon)| {
+            (
+                sensor,
+                (sensor.0 - beacon.0).abs() + (sensor.1 - beacon.1).abs(),
+            )
+        })
+        .collect();
+
+    // candidates are points just outside a sensor's range
+    let evaluate_candidate = |(x, y): (i64, i64)| {
+        if x < 0 || y < 0 || x > 4000000 || y > 4000000 {
+            return false;
+        }
+        for &(sensor, range) in &sensor_ranges {
+            let dist = (sensor.0 - x).abs() + (sensor.1 - y).abs();
+            if dist <= range {
                 return false;
             }
-            for &(sensor, beacon) in &pairs {
-                let range = (sensor.0 - beacon.0).abs() + (sensor.1 - beacon.1).abs();
-                let dist = (sensor.0 - x).abs() + (sensor.1 - y).abs();
-                if dist <= range {
-                    return false;
+        }
+        true
+    };
+
+    let found: Vec<(i64, i64)> = pairs
+        .par_iter()
+        .filter_map(|&(sensor, beacon)| {
+            let range = (sensor.0 - beacon.0).abs() + (sensor.1 - beacon.1).abs();
+            let dist = range + 1;
+            for x in (sensor.0 - dist)..=(sensor.0 + dist) {
+                let slack = dist - (sensor.0 - x).abs();
+                let highy = sensor.1 + slack;
+                let lowy = sensor.1 - slack;
+                if evaluate_candidate((x, highy)) {
+                    return Some((x, highy));
+                }
+                if evaluate_candidate((x, lowy)) {
+                    return Some((x, lowy));
                 }
             }
-            true
+            None
         })
         .collect();
 
