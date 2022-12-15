@@ -2,6 +2,7 @@ pub use chumsky::prelude::*;
 pub use itertools::Itertools;
 pub use ndarray::prelude::*;
 use num_traits::Num;
+pub use rayon::prelude::*;
 use std::fmt::Debug;
 use std::str::FromStr;
 
@@ -20,6 +21,15 @@ where
     <N as FromStr>::Err: Debug,
 {
     text::int::<char, Simple<char>>(10).from_str().unwrapped()
+}
+
+pub fn int<N: Num + FromStr + Clone>() -> impl Parser<char, N, Error = Simple<char>>
+where
+    <N as FromStr>::Err: Debug,
+{
+    let neg = just('-').ignore_then(num::<N>().map(|x: N| N::zero() - x));
+    let pos = num::<N>();
+    neg.or(pos)
 }
 
 pub fn literal(s: &str) -> impl Parser<char, (), Error = Simple<char>> {
