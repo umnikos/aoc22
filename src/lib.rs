@@ -16,6 +16,20 @@ pub fn offset_coords(coords: (usize, usize), offset: (isize, isize)) -> Option<(
     }
 }
 
+pub fn offset_coords_3d(
+    coords: (usize, usize, usize),
+    offset: (isize, isize, isize),
+) -> Option<(usize, usize, usize)> {
+    let a = coords.0 as isize + offset.0;
+    let b = coords.1 as isize + offset.1;
+    let c = coords.2 as isize + offset.2;
+    if a < 0 || b < 0 || c < 0 {
+        None
+    } else {
+        Some((a as usize, b as usize, c as usize))
+    }
+}
+
 pub fn num<N: Num + FromStr>() -> impl Parser<char, N, Error = Simple<char>>
 where
     <N as FromStr>::Err: Debug,
