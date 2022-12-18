@@ -54,13 +54,17 @@ fn part_two(input: &str) {
         .then_ignore(end())
         .parse(input)
         .unwrap();
-    let shape: HashSet<Point> = HashSet::from_iter(points.into_iter());
+    let shape: HashSet<Point> = HashSet::from_iter(
+        points
+            .into_iter()
+            .map(|p| offset_coords_3d(p, (1, 1, 1)).unwrap()),
+    );
     let m = shape
         .iter()
         .map(|&(a, b, c)| a.max(b).max(c))
         .max()
         .unwrap();
-    let is_in_bounds = |n: &Point| n.0.max(n.1).max(n.2) <= m + 1;
+    let is_in_bounds = |n: &Point| n.0.max(n.1).max(n.2) <= m + 3;
 
     let mut unvisited: VecDeque<Point> = VecDeque::from([(0, 0, 0)]);
     let mut considered: HashSet<Point> = HashSet::from([(0, 0, 0)]);
