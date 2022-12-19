@@ -17,7 +17,8 @@ use std::collections::{HashMap, HashSet};
 
 type Pressure = u64;
 type Time = u32;
-type Label = u16;
+type Label = usize;
+type LabelSet = u16; // exactly enough
 const LABEL_AA: Label = 0;
 
 fn parse_line() -> impl Parser<char, (Label, Pressure, Vec<Label>), Error = Simple<char>> {
@@ -25,7 +26,7 @@ fn parse_line() -> impl Parser<char, (Label, Pressure, Vec<Label>), Error = Simp
         filter(char::is_ascii_uppercase)
             .repeated()
             .exactly(2)
-            .map(|v| (v[0] as u16 - b'A' as u16) * 26 + (v[1] as u16 - b'A' as u16))
+            .map(|v| (v[0] as Label - b'A' as Label) * 26 + (v[1] as Label - b'A' as Label))
     };
     literal("Valve ")
         .ignore_then(label())
@@ -61,19 +62,21 @@ impl PartialOrd for Candidate {
     }
 }
 
-fn eat_input(input: &str) {
-    println!("bruh");
+fn eat_input(
+    input: &str,
+) -> (
+    Vec<(Label, Pressure, Vec<Label>)>,
+    HashMap<(Label, Label), Time>,
+) {
     let things = parse_line()
         .padded()
         .repeated()
         .then_ignore(end())
         .parse(input)
         .expect("parse error");
-    println!("{things:?}");
     // store walking distance from every label (at least the ones that matter) to every other label
     let mut graph: HashMap<(Label, Label), Time> = HashMap::new();
     for (label, pressure, _) in things.iter().cloned() {
-        println!("looping");
         if label != LABEL_AA && pressure == 0 {
             continue;
         }
@@ -89,7 +92,6 @@ fn eat_input(input: &str) {
             {
                 // update hashmap (unnecessarily complicated since I thought we were doing dijkstra)
                 let my_entry = graph.entry((label, current_label)).or_insert(Time::MAX);
-                println!("shoving things in graph");
                 *my_entry = time.min(*my_entry);
                 // add to unexplored if not considered
                 for (candidate_label, _candidate_pressure, candidate_neighbours) in things.iter() {
@@ -110,12 +112,51 @@ fn eat_input(input: &str) {
         }
     }
 
-    println!("{graph:?}");
-
-    // TODO - return something
+    (things, graph)
 }
 
 fn main() {
     let input = include_str!("input.txt");
-    eat_input(input);
+    part_one(input);
+    part_two(input);
 }
+
+fn part_one(input: &str) {
+    let (things, graph) = eat_input(input);
+    let mut enumeration: [LabelSet; 1 << 16] = [0; 1 << 16];
+    let mut i = 0;
+    let mut interesting_labels: Vec<(Label, Pressure)> = Vec::new();
+    for (label, pressure, _) in things.iter().cloned() {
+        if pressure != 0 || label == LABEL_AA {
+            enumeration[label] = 1 << i;
+            interesting_labels.push((label, pressure));
+            i += 1;
+        }
+    }
+    let mut timeline: [HashMap<(Label, LabelSet), Pressure>; 31] = [(); 31].map(|_| HashMap::new());
+    timeline[0].insert((LABEL_AA, enumeration[LABEL_AA]), 0);
+    let mut max = 0;
+    for t in 0_u32..30 {
+        for (&(label, set), &pressure) in timeline[t as usize].clone().iter() {
+            for (possibly_next, possibly_next_pressure) in interesting_labels.iter().cloned() {
+                if enumeration[possibly_next] & set != 0 {
+                    continue;
+                }
+                let walking_time = graph[&(label, possibly_next)];
+                let future_time = t + walking_time + 1;
+                if future_time > 30 {
+                    continue;
+                }
+                let my_entry = timeline[future_time as usize]
+                    .entry((possibly_next, set | enumeration[possibly_next]))
+                    .or_insert(0);
+                *my_entry = (pressure + possibly_next_pressure * (30 - future_time as Pressure))
+                    .max(*my_entry);
+                max = max.max(*my_entry);
+            }
+        }
+    }
+    println!("{max}");
+}
+
+fn part_two(input: &str) {}
