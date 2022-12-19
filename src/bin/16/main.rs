@@ -13,7 +13,7 @@
 
 use aoc22::*;
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 type Pressure = u64;
 type Time = u32;
@@ -31,8 +31,11 @@ fn parse_line() -> impl Parser<char, (Label, Pressure, Vec<Label>), Error = Simp
         .ignore_then(label())
         .then_ignore(literal(" has flow rate="))
         .then(num())
-        .then_ignore(literal("; tunnels lead to valves "))
-        .then(num().separated_by(literal(", ")))
+        .then_ignore(
+            literal("; ")
+                .then(literal("tunnels lead to valves ").or(literal("tunnel leads to valve "))),
+        )
+        .then(label().separated_by(literal(", ")))
         .map(|((l, f), v)| (l, f, v))
 }
 
@@ -59,35 +62,60 @@ impl PartialOrd for Candidate {
 }
 
 fn eat_input(input: &str) {
+    println!("bruh");
     let things = parse_line()
+        .padded()
         .repeated()
         .then_ignore(end())
         .parse(input)
-        .unwrap();
-    // store walking distance from every label to every other label (at least the ones that matter)
+        .expect("parse error");
+    println!("{things:?}");
+    // store walking distance from every label (at least the ones that matter) to every other label
     let mut graph: HashMap<(Label, Label), Time> = HashMap::new();
     for (label, pressure, _) in things.iter().cloned() {
+        println!("looping");
         if label != LABEL_AA && pressure == 0 {
             continue;
         }
-        // we begin dijkstra
-        let mut candidates: BinaryHeap<Candidate> =
-            BinaryHeap::from([Candidate { time: 0, label }]);
-        while let Some(Candidate {
-            time,
-            label: current_label,
-        }) = candidates.pop()
-        {
-            // update hashmap
-            let my_entry = graph.entry((label, current_label)).or_insert(Time::MAX);
-            *my_entry = time.min(*my_entry);
-
-            // add to candidates (avoiding looping forever)
-            for (candidate_label, candidate_pressure, )
+        // we begin bfs
+        let mut unexplored: Vec<Candidate> = Vec::from([Candidate { time: 0, label }]);
+        let mut considered: HashSet<Label> = HashSet::from([label]);
+        while !unexplored.is_empty() {
+            let mut newly_discovered = Vec::new();
+            for Candidate {
+                time,
+                label: current_label,
+            } in unexplored
+            {
+                // update hashmap (unnecessarily complicated since I thought we were doing dijkstra)
+                let my_entry = graph.entry((label, current_label)).or_insert(Time::MAX);
+                println!("shoving things in graph");
+                *my_entry = time.min(*my_entry);
+                // add to unexplored if not considered
+                for (candidate_label, _candidate_pressure, candidate_neighbours) in things.iter() {
+                    if considered.contains(candidate_label) {
+                        continue;
+                    }
+                    if !candidate_neighbours.contains(&current_label) {
+                        continue;
+                    }
+                    newly_discovered.push(Candidate {
+                        time: time + 1,
+                        label: *candidate_label,
+                    });
+                    considered.insert(*candidate_label);
+                }
+            }
+            unexplored = newly_discovered;
         }
     }
+
+    println!("{graph:?}");
 
     // TODO - return something
 }
 
-fn main() {}
+fn main() {
+    let input = include_str!("input.txt");
+    eat_input(input);
+}
