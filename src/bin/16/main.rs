@@ -121,7 +121,9 @@ fn main() {
     part_two(input);
 }
 
-fn part_one(input: &str) {
+type Timeline = [HashMap<(Label, LabelSet), Pressure>; 31];
+
+fn explore_the_timeline(input: &str, total_time: Time) -> Timeline {
     let (things, graph) = eat_input(input);
     let mut enumeration: [LabelSet; 1 << 16] = [0; 1 << 16];
     let mut i = 0;
@@ -133,10 +135,9 @@ fn part_one(input: &str) {
             i += 1;
         }
     }
-    let mut timeline: [HashMap<(Label, LabelSet), Pressure>; 31] = [(); 31].map(|_| HashMap::new());
-    timeline[0].insert((LABEL_AA, enumeration[LABEL_AA]), 0);
-    let mut max = 0;
-    for t in 0_u32..30 {
+    let mut timeline: Timeline = [(); 31].map(|_| HashMap::new());
+    timeline[0].insert((LABEL_AA, 0), 0);
+    for t in 0_u32..total_time {
         for (&(label, set), &pressure) in timeline[t as usize].clone().iter() {
             for (possibly_next, possibly_next_pressure) in interesting_labels.iter().cloned() {
                 if enumeration[possibly_next] & set != 0 {
@@ -144,19 +145,52 @@ fn part_one(input: &str) {
                 }
                 let walking_time = graph[&(label, possibly_next)];
                 let future_time = t + walking_time + 1;
-                if future_time > 30 {
+                // >= or > doesn't matter here since added pressure is 0 at future_time=30
+                if future_time >= total_time {
                     continue;
                 }
                 let my_entry = timeline[future_time as usize]
                     .entry((possibly_next, set | enumeration[possibly_next]))
                     .or_insert(0);
-                *my_entry = (pressure + possibly_next_pressure * (30 - future_time as Pressure))
+                *my_entry = (pressure
+                    + possibly_next_pressure * (total_time - future_time) as Pressure)
                     .max(*my_entry);
-                max = max.max(*my_entry);
+            }
+        }
+    }
+    timeline
+}
+
+fn part_one(input: &str) {
+    let timeline = explore_the_timeline(input, 30);
+    let mut max = 0;
+    for t in 0..30 {
+        let Some(time) = timeline.get(t) else {continue};
+        let Some(m) = time.iter().map(|(_, p)| p).max() else {continue};
+        max = max.max(*m);
+    }
+    println!("{max}");
+}
+
+// STRATEGY:
+// we use part 1
+// two non-overlapping sets with independent pressures being the goal
+fn part_two(input: &str) {
+    let timeline = explore_the_timeline(input, 26);
+    let mut max = 0;
+    for my_t in 0..26 {
+        for ele_t in my_t..26 {
+            let Some(my_time) = timeline.get(my_t) else {continue};
+            let Some(ele_time) = timeline.get(ele_t) else {continue};
+            for (&(_, my_set), &my_p) in my_time.iter() {
+                for (&(_, ele_set), &ele_p) in ele_time.iter() {
+                    if (my_set & ele_set) != 0 {
+                        continue;
+                    }
+                    max = max.max(my_p + ele_p);
+                }
             }
         }
     }
     println!("{max}");
 }
-
-fn part_two(input: &str) {}
