@@ -80,7 +80,7 @@ fn part_one(input: &str) {
     let monkey_map: HashMap<Name, Monkey> =
         monkeys.into_iter().map(|m| (m.name.clone(), m)).collect();
     let res = simulate_monkey(&monkey_map, "root");
-    println!("{res}");
+    println!("part one: {res}");
 }
 
 fn part_two(input: &str) {
@@ -100,21 +100,25 @@ fn part_two(input: &str) {
             _ => unreachable!("root has weird job"),
         };
     });
-    let res = (((22513426607673 - 52400000000 + 109795325 - 250000) * 4 / (12 + 15) - 2000)..)
-        .filter(|n| {
-            monkey_map.entry(String::from("humn")).and_modify(|m| {
-                match &mut m.job {
-                    Job::Yell(num) => {
-                        *num = *n;
-                    }
-                    _ => unreachable!("root has weird job"),
-                };
-            });
-            let real = simulate_monkey(&monkey_map, "root");
-            println!("{n} -> {real}");
-            real == 0
-        })
-        .nth(0)
-        .unwrap();
-    println!("{res}");
+    fn try_number(monkey_map: &mut HashMap<Name, Monkey>, n: i64) -> i64 {
+        monkey_map.entry(String::from("humn")).and_modify(|m| {
+            match &mut m.job {
+                Job::Yell(num) => {
+                    *num = n;
+                }
+                _ => unreachable!("root has weird job"),
+            };
+        });
+        simulate_monkey(&monkey_map, "root")
+    }
+    let mut guess = 0;
+    loop {
+        let real = try_number(&mut monkey_map, guess);
+        println!("{guess} -> {real}");
+        if real == 0 {
+            break;
+        }
+        guess += real * 4 / (12 + 15);
+    }
+    println!("part two: {guess}");
 }
