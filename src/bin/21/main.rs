@@ -118,7 +118,8 @@ fn part_two(input: &str) {
         if real == 0 {
             break;
         }
-        guess += real * 4 / (12 + 15);
+        let delta = try_number(&mut monkey_map, guess + 4);
+        guess += real * 4 / (real - delta);
     }
     println!("part two: {guess}");
 }
