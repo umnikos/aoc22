@@ -106,7 +106,7 @@ fn part_two(input: &str) {
                 Job::Yell(num) => {
                     *num = n;
                 }
-                _ => unreachable!("root has weird job"),
+                _ => unreachable!("human has weird job"),
             };
         });
         simulate_monkey(&monkey_map, "root")
@@ -118,8 +118,13 @@ fn part_two(input: &str) {
         if real == 0 {
             break;
         }
-        let delta = try_number(&mut monkey_map, guess + 4);
-        guess += real * 4 / (real - delta);
+        for delta in (2..).step_by(2) {
+            let epsilon = try_number(&mut monkey_map, guess + delta) - real;
+            if epsilon != 0 {
+                guess -= real * delta / epsilon;
+                break;
+            }
+        }
     }
     println!("part two: {guess}");
 }
