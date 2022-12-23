@@ -26,6 +26,7 @@ fn parse_input(input: &str) -> Board {
 fn main() {
     let input = include_str!("input.txt");
     part_one(input);
+    part_two(input);
 }
 
 fn add_tuple(a: (isize, isize), b: (isize, isize)) -> (isize, isize) {
@@ -40,10 +41,11 @@ fn rotate_right((x, y): (isize, isize)) -> (isize, isize) {
     (y, -x)
 }
 
-fn simulate_rounds(mut board: Board, rounds: u32) -> Board {
+fn simulate_rounds(mut board: Board, rounds: u32) -> (Board, u32) {
     let mut dirs = VecDeque::from([(-1, 0), (1, 0), (0, -1), (0, 1)]);
-    for _round in 0..rounds {
+    for round in 0..rounds {
         let mut proposed: HashMap<(isize, isize), u32> = HashMap::new();
+        let mut anyone_moved: bool = false;
         'proposing: for &elf in board.iter() {
             let (a, b, c, d) = dirs
                 .iter()
@@ -92,10 +94,11 @@ fn simulate_rounds(mut board: Board, rounds: u32) -> Board {
                     assert_ne!(*entry, 0);
                     if *entry == 1 {
                         new_board.insert(add_tuple(elf, dirs[i]));
+                        anyone_moved = true;
                     } else {
                         new_board.insert(elf);
                     }
-                    // we continue moving even if this was a dud because this was our proposed direction
+                    // we stop trying to move even if this was a dud because this was our proposed direction
                     continue 'moving;
                 }
             }
@@ -105,16 +108,20 @@ fn simulate_rounds(mut board: Board, rounds: u32) -> Board {
 
         board = new_board;
 
+        if !anyone_moved {
+            return (board, round);
+        }
+
         let to_be_last = dirs.pop_front().unwrap();
         dirs.push_back(to_be_last);
     }
 
-    board
+    (board, rounds)
 }
 
 fn part_one(input: &str) {
     let mut board = parse_input(input);
-    board = simulate_rounds(board, 10);
+    (board, _) = simulate_rounds(board, 10);
     let minx = board.iter().map(|(_y, x)| x).min().unwrap();
     let miny = board.iter().map(|(y, _x)| y).min().unwrap();
     let maxx = board.iter().map(|(_y, x)| x).max().unwrap();
@@ -122,4 +129,10 @@ fn part_one(input: &str) {
     let area = (maxx - minx + 1) * (maxy - miny + 1);
     let res = area - board.len() as isize;
     println!("part one: {res}");
+}
+
+fn part_two(input: &str) {
+    let board = parse_input(input);
+    let (_, rounds) = simulate_rounds(board, u32::MAX);
+    println!("part two: {}", rounds + 1);
 }
